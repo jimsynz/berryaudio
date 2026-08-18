@@ -7,11 +7,11 @@ logging.getLogger("PIL").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 class WidgetTextScrollable:
-    def __init__(self, font_path=None, font_size=10, 
+    def __init__(self, font_path=None, font_size=10, scroll_speed=0.5,
                  start_pause_duration=120, end_pause_duration=120):
         self.font_size = font_size
         self.scroll_offset = 0
-        self.scroll_speed = 0.5
+        self.scroll_speed = scroll_speed
         self.pause_frames = 0
         self.start_pause_duration = start_pause_duration
         self.end_pause_duration = end_pause_duration

@@ -19,6 +19,14 @@ class WidgetListScrollable:
         show_counter=True,
         font_path=None,
         font_size=8,
+        line_height=16,
+        max_chars=35,
+        text_color="white",
+        selected_text_color="black",
+        selection_color="white",
+        icon_color="white",
+        icon_dim_color=240,
+        counter_font_size=5,
     ):
         self.items = []
         self.selected_index = 0
@@ -26,6 +34,13 @@ class WidgetListScrollable:
         self.width = display_width
         self.height = display_height
         self.show_counter = show_counter
+        self.max_chars = max_chars
+        self.text_color = text_color
+        self.selected_text_color = selected_text_color
+        self.selection_color = selection_color
+        self.icon_color = icon_color
+        self.icon_dim_color = icon_dim_color
+        self.counter_font_size = counter_font_size
 
         # Load font
         if font_path:
@@ -39,7 +54,7 @@ class WidgetListScrollable:
             self.font = ImageFont.load_default()
 
         # Calculate layout
-        self.line_height = 16
+        self.line_height = line_height
         self.visible_items = self.height // self.line_height
         self.padding_left = 4
         self.scrollbar_width = 4
@@ -72,77 +87,76 @@ class WidgetListScrollable:
                 items[i], "connected", False
             )
 
-            max_chars = 35
-            if len(display_name) > max_chars:
-                display_name = display_name[: max_chars - 3] + "..."
+            if len(display_name) > self.max_chars:
+                display_name = display_name[: self.max_chars - 3] + "..."
 
             # Selected
             if i == self.selected_index:
                 draw.rectangle(
                     [(0, y_pos), (content_width, y_pos + self.line_height)],
-                    fill="white",
-                    outline="white",
+                    fill=self.selection_color,
+                    outline=self.selection_color,
                 )
 
                 if display_type == RefType.TRACK:
-                    draw.bitmap((2, y_pos + 4), self.track_icon, fill="black")
+                    draw.bitmap((2, y_pos + 4), self.track_icon, fill=self.selected_text_color)
                 elif (
                     display_type == RefType.DIRECTORY
                     or display_type == RefType.ALBUM
                     or display_type == RefType.ARTIST
                 ):
-                    draw.bitmap((2, y_pos + 4), self.folder_icon, fill="black")
+                    draw.bitmap((2, y_pos + 4), self.folder_icon, fill=self.selected_text_color)
                 elif (
                     display_type == RefType.STORAGE
                     or display_type == RefType.NAS
                     or display_type == RefType.REMOVABLE
                 ):
-                    draw.bitmap((2, y_pos + 4), self.storage_icon, fill="black")
+                    draw.bitmap((2, y_pos + 4), self.storage_icon, fill=self.selected_text_color)
                 elif display_type == RefType.BLUETOOTH:
-                    draw.bitmap((2, y_pos + 4), self.bluetooth_icon, fill="black")
+                    draw.bitmap((2, y_pos + 4), self.bluetooth_icon, fill=self.selected_text_color)
                 else:
-                    draw.bitmap((4, y_pos + 4), self.bullet_icon, fill="black")
+                    draw.bitmap((4, y_pos + 4), self.bullet_icon, fill=self.selected_text_color)
 
                 draw.text(
                     (self.padding_left + 12, y_pos + 1),
                     f"{display_name}",
                     font=self.font,
-                    fill="black",
+                    fill=self.selected_text_color,
                 )
 
             else:
                 # Draw normal text
                 if display_type == RefType.TRACK:
-                    draw.bitmap((2, y_pos + 4), self.track_icon, fill=240)
+                    draw.bitmap((2, y_pos + 4), self.track_icon, fill=self.icon_dim_color)
                 elif (
                     display_type == RefType.DIRECTORY
                     or display_type == RefType.ALBUM
                     or display_type == RefType.ARTIST
                 ):
-                    draw.bitmap((2, y_pos + 4), self.folder_icon, fill=240)
+                    draw.bitmap((2, y_pos + 4), self.folder_icon, fill=self.icon_dim_color)
                 elif (
                     display_type == RefType.STORAGE
                     or display_type == RefType.NAS
                     or display_type == RefType.REMOVABLE
                 ):
-                    draw.bitmap((2, y_pos + 4), self.storage_icon, fill=240)
+                    draw.bitmap((2, y_pos + 4), self.storage_icon, fill=self.icon_dim_color)
 
                 elif display_type == RefType.BLUETOOTH:
-                    draw.bitmap((2, y_pos + 4), self.bluetooth_icon, fill=240)
+                    draw.bitmap((2, y_pos + 4), self.bluetooth_icon, fill=self.icon_dim_color)
                 else:
                     pass
 
                 if display_active:
                     if display_type == RefType.BLUETOOTH:
-                        draw.bitmap((2, y_pos + 4), self.bluetooth_icon, fill="white")
+                        draw.bitmap((2, y_pos + 4), self.bluetooth_icon, fill=self.icon_color)
                     else:
-                        draw.bitmap((4, y_pos + 4), self.bullet_icon, fill="white")
+                        draw.bitmap((4, y_pos + 4), self.bullet_icon, fill=self.icon_color)
 
                 draw.text(
                     (self.padding_left + 12, y_pos + 1),
                     display_name,
                     font=self.font,
-                    fill="white",
+                    fill=self.text_color,
                 )
 
         # Draw scrollbar if needed
@@ -151,7 +165,8 @@ class WidgetListScrollable:
 
             # Draw scrollbar track
             draw.rectangle(
-                [(scrollbar_x, 0), (self.width - 1, self.height - 1)], outline="white"
+                [(scrollbar_x, 0), (self.width - 1, self.height - 1)],
+                outline=self.icon_dim_color,
             )
 
             # Calculate scrollbar thumb size and position
@@ -176,13 +191,13 @@ class WidgetListScrollable:
                     (scrollbar_x + 1, thumb_pos),
                     (self.width - 2, thumb_pos + thumb_height),
                 ],
-                fill="white",
+                fill=self.selection_color,
             )
 
         if self.show_counter:
             counter_text = f"{self.selected_index + 1}/{len(self.items)}"
             font = ImageFont.truetype(
-                FONT_STYLE_1, 5, layout_engine=ImageFont.Layout.BASIC
+                FONT_STYLE_1, self.counter_font_size, layout_engine=ImageFont.Layout.BASIC
             )
 
             bbox = font.getbbox(counter_text)
@@ -198,9 +213,11 @@ class WidgetListScrollable:
             text_y = rect_y1 + (12 - text_h) // 2
 
             draw.rectangle(
-                [(rect_x1, rect_y1), (rect_x2, rect_y2)], fill="black", outline="white"
+                [(rect_x1, rect_y1), (rect_x2, rect_y2)],
+                fill="black",
+                outline=self.text_color,
             )
-            draw.text((text_x, text_y), counter_text, font=font, fill="white")
+            draw.text((text_x, text_y), counter_text, font=font, fill=self.text_color)
 
     def scroll_down(self):
         if self.items is None:

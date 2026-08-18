@@ -6,6 +6,7 @@ import threading
 import numpy as np
 
 from pathlib import Path
+from PIL import Image, ImageDraw
 
 logger = logging.getLogger(__name__)
 
@@ -87,10 +88,6 @@ class WidgetSpectumAnalyzer:
             self.cava_process.terminate()
             self.cava_process.wait()
 
-    def draw_textured_bar(self, draw, x, y, width, height, pattern, color):
-        if pattern == "solid":
-            draw.rectangle((x, y, x + width - 1, y + height - 1), fill=color)
-
     def draw(
         self,
         draw,
@@ -101,6 +98,9 @@ class WidgetSpectumAnalyzer:
         bar_pattern="solid",
         labels=True,
         bar_color="white",
+        bar_image=None,
+        peak_color="white",
+        baseline_color="white",
         bar_gap=1,
     ):
         attack_factor = 0.5
@@ -166,7 +166,13 @@ class WidgetSpectumAnalyzer:
                     self.peaks[i] = max(self.peaks[i] - peak_fall_speed, min_peak)
 
         baseline_y = y + height
-        draw.line((x, baseline_y, x + width - 1, baseline_y), fill="white")
+        if baseline_color:
+            draw.line((x, baseline_y, x + width - 1, baseline_y), fill=baseline_color)
+
+        bar_mask = None
+        if bar_image is not None:
+            bar_mask = Image.new("1", (width, height), 0)
+            mask_draw = ImageDraw.Draw(bar_mask)
 
         bar_width = (width // self.num_bars) - bar_gap
         for i in range(self.num_bars):
@@ -175,13 +181,29 @@ class WidgetSpectumAnalyzer:
             bar_x = x + i * (bar_width + bar_gap)
             bar_y = y + height - _height
 
-            self.draw_textured_bar(
-                draw, bar_x, bar_y, bar_width, _height, bar_pattern, bar_color
-            )
+            if bar_mask is not None:
+                mask_draw.rectangle(
+                    (
+                        bar_x - x,
+                        bar_y - y,
+                        bar_x - x + bar_width - 1,
+                        height - 1,
+                    ),
+                    fill=1,
+                )
+            else:
+                self.draw_textured_bar(
+                    draw, bar_x, bar_y, bar_width, _height, bar_pattern, bar_color
+                )
 
             if peak_height > _height + peak_gap:
                 peak_y = y + height - peak_height
-                draw.line((bar_x, peak_y, bar_x + bar_width - 1, peak_y), fill="white")
+                draw.line(
+                    (bar_x, peak_y, bar_x + bar_width - 1, peak_y), fill=peak_color
+                )
+
+        if bar_mask is not None:
+            draw._image.paste(bar_image, (x, y), mask=bar_mask)
 
     def draw_textured_bar(self, draw, x, y, width, height, pattern, color="white"):
         if pattern == "checkerboard":

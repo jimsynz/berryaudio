@@ -2,8 +2,21 @@ from PIL import ImageFont
 
 
 class WidgetCodecBitrate:
-    def __init__(self, font_path=None):
+    def __init__(
+        self,
+        font_path=None,
+        outline_color="white",
+        background_color="black",
+        highlight_color="white",
+        text_color="white",
+        highlight_text_color="black",
+    ):
         self._font_path = font_path
+        self._outline_color = outline_color
+        self._background_color = background_color
+        self._highlight_color = highlight_color
+        self._text_color = text_color
+        self._highlight_text_color = highlight_text_color
 
     def draw(
         self,
@@ -14,9 +27,9 @@ class WidgetCodecBitrate:
         audio_codec="PCM",
         codec_font_size=5,
         bitrate_font_size=5,
+        box_width=21,
+        box_height=20,
     ):
-        box_width = 21
-        box_height = 20
         highlight_y = y + box_height // 2
 
         font_label = ImageFont.truetype(self._font_path, codec_font_size)
@@ -28,18 +41,19 @@ class WidgetCodecBitrate:
 
         draw.rectangle(
             [(x, y), (x + box_width - 1, y + box_height - 1)],
-            outline="white",
-            fill="black",
+            outline=self._outline_color,
+            fill=self._background_color,
         )
         draw.rectangle(
-            [(x, highlight_y), (x + box_width - 1, y + box_height - 1)], fill="white"
+            [(x, highlight_y), (x + box_width - 1, y + box_height - 1)],
+            fill=self._highlight_color,
         )
 
         bitrate_width = draw.textbbox((0, 0), bitrate_display, font=font_bitrate)[2]
         draw.text(
             (x + (box_width - bitrate_width) // 2 + 1, y + 3),
             bitrate_display,
-            fill="white",
+            fill=self._text_color,
             font=font_bitrate,
             anchor="lt",
         )
@@ -50,7 +64,7 @@ class WidgetCodecBitrate:
         draw.text(
             (x + (box_width - label_width) // 2 + 1, highlight_y + 2),
             self.get_codec_name(audio_codec),
-            fill="black",
+            fill=self._highlight_text_color,
             font=font_label,
             anchor="lt",
         )
