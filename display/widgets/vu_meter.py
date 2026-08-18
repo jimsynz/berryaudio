@@ -6,8 +6,7 @@ import time
 import numpy as np
 
 from pathlib import Path
-from PIL import ImageFont
-from luma.core.render import canvas
+from PIL import Image, ImageDraw, ImageFont
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +93,12 @@ class WidgetVUMeter:
         x=0,
         bar_pattern="checkerboard",
         labels=True,
+        bar_color="white",
+        bar_image=None,
+        peak_color="white",
+        frame_color="white",
+        label_color="white",
+        font_size=16,
     ):
         box_x = x + 10
         box_y = y + 10 if labels else y
@@ -115,8 +120,7 @@ class WidgetVUMeter:
         peak_gap = 2
         hold_frames = 20
 
-        CUSTOM_FONT_SIZE = 16
-        font = ImageFont.truetype(FONT_STYLE_1, CUSTOM_FONT_SIZE)
+        font = ImageFont.truetype(FONT_STYLE_1, font_size)
 
         try:
             available_data = b""
@@ -192,15 +196,11 @@ class WidgetVUMeter:
             fill="black",
         )
 
-        for x in range(box_width):
-            if x % 2 == 0:
-                draw.point((box_x + x, box_y), fill="white")
+        for i in range(0, box_width, 2):
+            draw.point((box_x + i, box_y), fill=frame_color)
+            draw.point((box_x + i, box_y + box_height - 1), fill=frame_color)
 
-        for x in range(box_width):
-            if x % 2 == 0:
-                draw.point((box_x + x, box_y + box_height - 1), fill="white")
-
-        draw.line((box_x, box_y, box_x, box_y + box_height - 1), fill="white")
+        draw.line((box_x, box_y, box_x, box_y + box_height - 1), fill=frame_color)
 
         draw.line(
             (
@@ -209,7 +209,7 @@ class WidgetVUMeter:
                 box_x + box_width - 1,
                 box_y + box_height - 1,
             ),
-            fill="white",
+            fill=frame_color,
         )
 
         marker_positions = [
@@ -232,7 +232,7 @@ class WidgetVUMeter:
             text_x = marker_x - text_width // 2
             text_x = max(0, min(text_x, width - text_width))
 
-            draw.text((text_x, percentage_y), label, fill="white", font=font)
+            draw.text((text_x, percentage_y), label, fill=label_color, font=font)
 
         max_bar_width = bar_width
         left_width = int(self.smoothed_levels[0])
@@ -241,9 +241,9 @@ class WidgetVUMeter:
         right_width = int(self.smoothed_levels[1])
         right_peak = int(self.peaks[1])
 
-        draw.text((box_x - 7, left_bar_y - 7), "L", fill="white", font=font)
+        draw.text((box_x - 7, left_bar_y - 7), "L", fill=label_color, font=font)
 
-        draw.text((box_x - 7, right_bar_y - 5), "R", fill="white", font=font)
+        draw.text((box_x - 7, right_bar_y - 5), "R", fill=label_color, font=font)
 
         if left_width > 0:
             self.draw_textured_bar(
@@ -253,6 +253,8 @@ class WidgetVUMeter:
                 left_width,
                 bar_height,
                 bar_pattern,
+                bar_color,
+                bar_image,
             )
 
         if left_peak > 0 and left_peak <= max_bar_width:
@@ -264,7 +266,7 @@ class WidgetVUMeter:
                         box_x + box_padding + left_peak + 1,
                         left_bar_y + bar_height - 1,
                     ),
-                    fill="white",
+                    fill=peak_color,
                 )
 
         if right_width > 0:
@@ -275,6 +277,8 @@ class WidgetVUMeter:
                 right_width,
                 bar_height,
                 bar_pattern,
+                bar_color,
+                bar_image,
             )
 
         if right_peak > 0 and right_peak <= max_bar_width:
@@ -286,16 +290,21 @@ class WidgetVUMeter:
                         box_x + box_padding + right_peak + 1,
                         right_bar_y + bar_height - 1,
                     ),
-                    fill="white",
+                    fill=peak_color,
                 )
 
         self.frame += 1
 
-    def draw_textured_bar(self, draw, x, y, width, height, pattern):
-        if pattern == "checkerboard":
+    def draw_textured_bar(
+        self, draw, x, y, width, height, pattern, color="white", image=None
+    ):
+        if image is not None:
+            mask = Image.new("1", (width, height), 1)
+            draw._image.paste(image.crop((0, 0, width, height)), (x, y), mask=mask)
+        elif pattern == "checkerboard":
             for i in range(width):
                 for j in range(height):
                     if (i + j) % 2 == 0:
-                        draw.point((x + i, y + j), fill="white")
+                        draw.point((x + i, y + j), fill=color)
         else:
-            draw.rectangle((x, y, x + width - 1, y + height - 1), fill="white")
+            draw.rectangle((x, y, x + width - 1, y + height - 1), fill=color)

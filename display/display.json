@@ -8,7 +8,7 @@
     "cmdline": null,
     "xrandr": null
   },
-    {
+  {
     "device": "generic_hdmi",
     "name": "Generic HDMI Display",
     "description": "Raspberry Pi HDMI Output",
@@ -44,6 +44,15 @@
     "cmdline": null,
     "xrandr_output": null,
     "rotate": null
+  },
+  {
+    "device": "ili9341",
+    "name": "ILI9341 SPI Touch Display",
+    "description": "320x240 2.8\" SPI Touch Display. USB DAC only, the panel's keys occupy the I2S pins so it cannot be used with an I2S DAC HAT.",
+    "address": null,
+    "dtoverlay": null,
+    "cmdline": null,
+    "xrandr": null
   },
   {
     "device": "waveshare_28_dsi",
