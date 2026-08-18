@@ -27,6 +27,7 @@ class SearchExtension(Actor):
         results = await asyncio.gather(
             self._core.request("radio.search", query=query),
             self._core.request("local.search", query=query),
+            self._core.request("plex.search", query=query),
             return_exceptions=True,
         )
         result_merged = {}
@@ -36,5 +37,5 @@ class SearchExtension(Actor):
             if isinstance(result, dict):
                 for key, value in result.items():
                     if len(value):
-                        result_merged[key] = value
+                        result_merged.setdefault(key, []).extend(value)
         return result_merged
