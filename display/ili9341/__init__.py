@@ -22,7 +22,7 @@ from display.widgets.play_pause import WidgetPlayPause
 from display.widgets.progress_bar import WidgetProgressBar
 from display.widgets.loader import WidgetLoader
 from display.utils import format_time, mix_colour, power_state_name, scale_colour
-from .xpt2046 import TouchXPT2046
+from .stmpe610 import TouchSTMPE610
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +37,12 @@ ICON_SINGLE = Path(__file__).parent.parent / "icons" / "single.png"
 
 SPI_PORT = 0
 SPI_DEVICE = 0
-SPI_DC_PIN = 22
-SPI_RST_PIN = 27
-SPI_SPEED_HZ = 48000000
+# This panel follows the Adafruit PiTFT 2.8" resistive layout: data/command on
+# GPIO25, no reset line, and an STMPE610 on the second chip select. GPIO27 is
+# one of the on-board buttons, so it must not be driven as an output.
+SPI_DC_PIN = 25
+SPI_RST_PIN = None
+SPI_SPEED_HZ = 16000000
 
 TOUCH_DEVICE = 1
 TOUCH_SPEED_HZ = 1000000
@@ -94,6 +97,8 @@ class DisplayILI9341:
         self._framerate = config.get("framerate", DISPLAY_FRAMERATE)
         self._spi_speed_hz = config.get("spi_speed_hz", SPI_SPEED_HZ)
         self._backlight_pin = config.get("backlight_pin")
+        self._dc_pin = config.get("dc_pin", SPI_DC_PIN)
+        self._rst_pin = config.get("rst_pin", SPI_RST_PIN)
         self._config = config
         self._on_command = on_command
         self._serial = None
@@ -114,7 +119,7 @@ class DisplayILI9341:
         self._blink_visible = False
         self._current_track = None
         self._current_elapsed = 0
-        self._current_time = None
+        self._current_time = format_time(None)
         self._current_dir = None
         self._source_dir = None
         self._widget_visualizer = None
@@ -295,8 +300,8 @@ class DisplayILI9341:
             self._serial = spi(
                 port=SPI_PORT,
                 device=SPI_DEVICE,
-                gpio_DC=SPI_DC_PIN,
-                gpio_RST=SPI_RST_PIN,
+                gpio_DC=self._dc_pin,
+                gpio_RST=self._rst_pin,
                 bus_speed_hz=self._spi_speed_hz,
                 reset_hold_time=0.05,
                 reset_release_time=0.15,
@@ -347,7 +352,7 @@ class DisplayILI9341:
         if not self._config.get("touch_enabled", True):
             return
 
-        self._touch = TouchXPT2046(
+        self._touch = TouchSTMPE610(
             width=self.width,
             height=self.height,
             port=SPI_PORT,
@@ -393,12 +398,15 @@ class DisplayILI9341:
 
                 self._dirty = False
                 self._hints_drawn = showing_hints
-                self._refresh_accent()
 
-                with canvas(self._device) as draw:
-                    self._draw_page(draw)
-                    if showing_hints:
-                        self._draw_hints(draw)
+                try:
+                    self._refresh_accent()
+                    with canvas(self._device) as draw:
+                        self._draw_page(draw)
+                        if showing_hints:
+                            self._draw_hints(draw)
+                except Exception:
+                    logger.exception(f"Error rendering page '{self._page}'")
 
     def _refresh_accent(self):
         if self._cover_art.accent == self._accent:
