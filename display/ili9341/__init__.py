@@ -66,13 +66,7 @@ COLOUR_DIM = (104, 104, 104)
 COLOUR_TRACK = (38, 38, 38)
 COLOUR_OVERLAY = (16, 16, 16)
 
-ANIMATED_PAGES = (
-    DisplayPage.LOADING,
-    DisplayPage.MUTE,
-    DisplayPage.NOW_PLAYING,
-    DisplayPage.POWER_STATE_CHANGING,
-    DisplayPage.STANDBY,
-)
+ANIMATED_PAGES = (DisplayPage.LOADING, DisplayPage.NOW_PLAYING)
 
 LIST_PAGES = (DisplayPage.DIRECTORY, DisplayPage.SOURCE_DIRECTORY)
 
@@ -130,6 +124,7 @@ class DisplayILI9341:
         self._vu_gradient = None
         self._hint_overlays = {}
         self._hint_until = 0.0
+        self._hints_drawn = False
         self._font_status = ImageFont.truetype(str(FONT_BODY), 8)
         self._font_volume = ImageFont.truetype(str(FONT_NUMERIC), 24)
         self._font_headline = ImageFont.truetype(str(FONT_NUMERIC), 48)
@@ -386,15 +381,24 @@ class DisplayILI9341:
 
         while self.running:
             with regulator:
-                if not self._dirty and self._page not in ANIMATED_PAGES:
+                showing_hints = time.monotonic() < self._hint_until
+
+                if (
+                    not self._dirty
+                    and not showing_hints
+                    and not self._hints_drawn
+                    and self._page not in ANIMATED_PAGES
+                ):
                     continue
 
                 self._dirty = False
+                self._hints_drawn = showing_hints
                 self._refresh_accent()
 
                 with canvas(self._device) as draw:
                     self._draw_page(draw)
-                    self._draw_hints(draw)
+                    if showing_hints:
+                        self._draw_hints(draw)
 
     def _refresh_accent(self):
         if self._cover_art.accent == self._accent:
@@ -624,9 +628,6 @@ class DisplayILI9341:
         )
 
     def _draw_hints(self, draw):
-        if time.monotonic() >= self._hint_until:
-            return
-
         zones = self._zones()
         overlay = self._hint_overlays.get(zones)
         if overlay is None:
