@@ -21,6 +21,7 @@ class WidgetListScrollable:
         font_size=8,
         line_height=16,
         max_chars=35,
+        icon_scale=1,
         text_color="white",
         selected_text_color="black",
         selection_color="white",
@@ -35,6 +36,7 @@ class WidgetListScrollable:
         self.height = display_height
         self.show_counter = show_counter
         self.max_chars = max_chars
+        self.icon_scale = icon_scale
         self.text_color = text_color
         self.selected_text_color = selected_text_color
         self.selection_color = selection_color
@@ -59,11 +61,15 @@ class WidgetListScrollable:
         self.padding_left = 4
         self.scrollbar_width = 4
         self.scrollbar_padding = 2
-        self.folder_icon = Image.open(ICON_DIRECTORY)
-        self.track_icon = Image.open(ICON_MUSIC_NOTE)
-        self.bullet_icon = Image.open(ICON_BULLET)
-        self.storage_icon = Image.open(ICON_STORAGE)
-        self.bluetooth_icon = Image.open(ICON_BLUETOOTH)
+        self.icon_offset = (line_height - (8 * icon_scale)) // 2
+        self.icon_x = 2 * icon_scale
+        self.bullet_x = 4 * icon_scale
+        self.text_indent = self.padding_left + (12 * icon_scale)
+        self.folder_icon = self._load_icon(ICON_DIRECTORY)
+        self.track_icon = self._load_icon(ICON_MUSIC_NOTE)
+        self.bullet_icon = self._load_icon(ICON_BULLET)
+        self.storage_icon = self._load_icon(ICON_STORAGE)
+        self.bluetooth_icon = self._load_icon(ICON_BLUETOOTH)
 
     def set_items(self, items, selected_index=0, scroll_offset=0):
         self.items = items
@@ -99,26 +105,46 @@ class WidgetListScrollable:
                 )
 
                 if display_type == RefType.TRACK:
-                    draw.bitmap((2, y_pos + 4), self.track_icon, fill=self.selected_text_color)
+                    draw.bitmap(
+                        (self.icon_x, y_pos + self.icon_offset),
+                        self.track_icon,
+                        fill=self.selected_text_color,
+                    )
                 elif (
                     display_type == RefType.DIRECTORY
                     or display_type == RefType.ALBUM
                     or display_type == RefType.ARTIST
                 ):
-                    draw.bitmap((2, y_pos + 4), self.folder_icon, fill=self.selected_text_color)
+                    draw.bitmap(
+                        (self.icon_x, y_pos + self.icon_offset),
+                        self.folder_icon,
+                        fill=self.selected_text_color,
+                    )
                 elif (
                     display_type == RefType.STORAGE
                     or display_type == RefType.NAS
                     or display_type == RefType.REMOVABLE
                 ):
-                    draw.bitmap((2, y_pos + 4), self.storage_icon, fill=self.selected_text_color)
+                    draw.bitmap(
+                        (self.icon_x, y_pos + self.icon_offset),
+                        self.storage_icon,
+                        fill=self.selected_text_color,
+                    )
                 elif display_type == RefType.BLUETOOTH:
-                    draw.bitmap((2, y_pos + 4), self.bluetooth_icon, fill=self.selected_text_color)
+                    draw.bitmap(
+                        (self.icon_x, y_pos + self.icon_offset),
+                        self.bluetooth_icon,
+                        fill=self.selected_text_color,
+                    )
                 else:
-                    draw.bitmap((4, y_pos + 4), self.bullet_icon, fill=self.selected_text_color)
+                    draw.bitmap(
+                        (self.bullet_x, y_pos + self.icon_offset),
+                        self.bullet_icon,
+                        fill=self.selected_text_color,
+                    )
 
                 draw.text(
-                    (self.padding_left + 12, y_pos + 1),
+                    (self.text_indent, y_pos + 1),
                     f"{display_name}",
                     font=self.font,
                     fill=self.selected_text_color,
@@ -127,33 +153,57 @@ class WidgetListScrollable:
             else:
                 # Draw normal text
                 if display_type == RefType.TRACK:
-                    draw.bitmap((2, y_pos + 4), self.track_icon, fill=self.icon_dim_color)
+                    draw.bitmap(
+                        (self.icon_x, y_pos + self.icon_offset),
+                        self.track_icon,
+                        fill=self.icon_dim_color,
+                    )
                 elif (
                     display_type == RefType.DIRECTORY
                     or display_type == RefType.ALBUM
                     or display_type == RefType.ARTIST
                 ):
-                    draw.bitmap((2, y_pos + 4), self.folder_icon, fill=self.icon_dim_color)
+                    draw.bitmap(
+                        (self.icon_x, y_pos + self.icon_offset),
+                        self.folder_icon,
+                        fill=self.icon_dim_color,
+                    )
                 elif (
                     display_type == RefType.STORAGE
                     or display_type == RefType.NAS
                     or display_type == RefType.REMOVABLE
                 ):
-                    draw.bitmap((2, y_pos + 4), self.storage_icon, fill=self.icon_dim_color)
+                    draw.bitmap(
+                        (self.icon_x, y_pos + self.icon_offset),
+                        self.storage_icon,
+                        fill=self.icon_dim_color,
+                    )
 
                 elif display_type == RefType.BLUETOOTH:
-                    draw.bitmap((2, y_pos + 4), self.bluetooth_icon, fill=self.icon_dim_color)
+                    draw.bitmap(
+                        (self.icon_x, y_pos + self.icon_offset),
+                        self.bluetooth_icon,
+                        fill=self.icon_dim_color,
+                    )
                 else:
                     pass
 
                 if display_active:
                     if display_type == RefType.BLUETOOTH:
-                        draw.bitmap((2, y_pos + 4), self.bluetooth_icon, fill=self.icon_color)
+                        draw.bitmap(
+                        (self.icon_x, y_pos + self.icon_offset),
+                        self.bluetooth_icon,
+                        fill=self.icon_color,
+                    )
                     else:
-                        draw.bitmap((4, y_pos + 4), self.bullet_icon, fill=self.icon_color)
+                        draw.bitmap(
+                        (self.bullet_x, y_pos + self.icon_offset),
+                        self.bullet_icon,
+                        fill=self.icon_color,
+                    )
 
                 draw.text(
-                    (self.padding_left + 12, y_pos + 1),
+                    (self.text_indent, y_pos + 1),
                     display_name,
                     font=self.font,
                     fill=self.text_color,
@@ -197,7 +247,9 @@ class WidgetListScrollable:
         if self.show_counter:
             counter_text = f"{self.selected_index + 1}/{len(self.items)}"
             font = ImageFont.truetype(
-                FONT_STYLE_1, self.counter_font_size, layout_engine=ImageFont.Layout.BASIC
+                FONT_STYLE_1,
+                self.counter_font_size,
+                layout_engine=ImageFont.Layout.BASIC,
             )
 
             bbox = font.getbbox(counter_text)
@@ -287,3 +339,12 @@ class WidgetListScrollable:
 
     def get_selected_index(self):
         return self.selected_index
+
+    def _load_icon(self, path):
+        icon = Image.open(path)
+        if self.icon_scale == 1:
+            return icon
+        return icon.resize(
+            (icon.width * self.icon_scale, icon.height * self.icon_scale),
+            Image.NEAREST,
+        )
