@@ -37,7 +37,10 @@ ICON_SINGLE = Path(__file__).parent.parent / "icons" / "single.png"
 
 SPI_PORT = 0
 SPI_DEVICE = 0
-SPI_DC_PIN = 22
+# The vendor pin table lists RS on physical pin 15 and leaves physical pin 22
+# unconnected. The board is wired the other way round, following the Waveshare
+# RPi LCD convention, and was verified by driving each candidate in turn.
+SPI_DC_PIN = 25
 SPI_RST_PIN = 27
 SPI_SPEED_HZ = 16000000
 
@@ -94,6 +97,8 @@ class DisplayILI9341:
         self._framerate = config.get("framerate", DISPLAY_FRAMERATE)
         self._spi_speed_hz = config.get("spi_speed_hz", SPI_SPEED_HZ)
         self._backlight_pin = config.get("backlight_pin")
+        self._dc_pin = config.get("dc_pin", SPI_DC_PIN)
+        self._rst_pin = config.get("rst_pin", SPI_RST_PIN)
         self._config = config
         self._on_command = on_command
         self._serial = None
@@ -295,8 +300,8 @@ class DisplayILI9341:
             self._serial = spi(
                 port=SPI_PORT,
                 device=SPI_DEVICE,
-                gpio_DC=SPI_DC_PIN,
-                gpio_RST=SPI_RST_PIN,
+                gpio_DC=self._dc_pin,
+                gpio_RST=self._rst_pin,
                 bus_speed_hz=self._spi_speed_hz,
                 reset_hold_time=0.05,
                 reset_release_time=0.15,

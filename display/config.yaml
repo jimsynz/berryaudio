@@ -3,6 +3,8 @@ visualizer_layout: 7
 rotate: 0
 framerate: 20
 spi_speed_hz: 16000000
+dc_pin: 25
+rst_pin: 27
 backlight_pin: null
 touch_enabled: true
 touch_rotate: 0
