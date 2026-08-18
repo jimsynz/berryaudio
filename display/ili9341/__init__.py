@@ -22,7 +22,7 @@ from display.widgets.play_pause import WidgetPlayPause
 from display.widgets.progress_bar import WidgetProgressBar
 from display.widgets.loader import WidgetLoader
 from display.utils import format_time, mix_colour, power_state_name, scale_colour
-from .xpt2046 import TouchXPT2046
+from .stmpe610 import TouchSTMPE610
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +37,11 @@ ICON_SINGLE = Path(__file__).parent.parent / "icons" / "single.png"
 
 SPI_PORT = 0
 SPI_DEVICE = 0
-# The vendor pin table lists RS on physical pin 15 and leaves physical pin 22
-# unconnected. The board is wired the other way round, following the Waveshare
-# RPi LCD convention, and was verified by driving each candidate in turn.
+# This panel follows the Adafruit PiTFT 2.8" resistive layout: data/command on
+# GPIO25, no reset line, and an STMPE610 on the second chip select. GPIO27 is
+# one of the on-board buttons, so it must not be driven as an output.
 SPI_DC_PIN = 25
-SPI_RST_PIN = 27
+SPI_RST_PIN = None
 SPI_SPEED_HZ = 16000000
 
 TOUCH_DEVICE = 1
@@ -352,7 +352,7 @@ class DisplayILI9341:
         if not self._config.get("touch_enabled", True):
             return
 
-        self._touch = TouchXPT2046(
+        self._touch = TouchSTMPE610(
             width=self.width,
             height=self.height,
             port=SPI_PORT,
