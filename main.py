@@ -43,6 +43,7 @@ async def async_main(verbose=False):
         "shairportsync",
         "bluetooth",
         "local",
+        "plex",
         "search",
         "storage",
         "playlist",
