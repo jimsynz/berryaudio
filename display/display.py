@@ -275,6 +275,14 @@ class DisplayExtension(Actor):
                                     )
                                     self.set_dir(_current_dir)
 
+                            elif self._source.uri == "plex":
+                                if self._current_dir is None:
+                                    self.set_page(DisplayPage.LOADING)
+                                    _current_dir = await self._core.request(
+                                        "plex.directory"
+                                    )
+                                    self.set_dir(_current_dir)
+
                             elif self._source.uri == "storage":
                                 if self._current_dir is None:
                                     self.set_page(DisplayPage.LOADING)
