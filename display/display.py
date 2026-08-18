@@ -10,6 +10,7 @@ from core.util.system import SystemUtil
 
 from .ssd1322 import DisplaySSD1322
 from .ssd1306 import DisplaySSD1306
+from .ili9341 import DisplayILI9341
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,8 @@ class DisplayExtension(Actor):
 
     async def on_config_update(self, config):
         updated_config = config[self._name]
+        self._config[self._name].update(updated_config)
+
         if "output_display" in updated_config:
             await self.set_display(updated_config.get("output_display"))
 
@@ -511,6 +514,11 @@ class DisplayExtension(Actor):
             self._timer_blink = None
         self.set_blink_visible(True)
 
+    def send_command(self, action):
+        self._core.send(
+            target=["web", "display", "command"], event="command", action=action
+        )
+
     def on_get_displays(self) -> list[dict] | dict | None:
         """Return displays, optionally filtered by device name."""
         with open(DISPLAY_LIST_PATH, "r", encoding="utf-8") as f:
@@ -559,6 +567,10 @@ class DisplayExtension(Actor):
             self._controller = DisplaySSD1322(contrast=255)
         elif device == "ssd1306":
             self._controller = DisplaySSD1306(contrast=255)
+        elif device == "ili9341":
+            self._controller = DisplayILI9341(
+                config=self._config[self._name], on_command=self.send_command
+            )
         elif device in ("waveshare_28_dsi", "generic_hdmi", "generic_dsi"):
             pass
         else:

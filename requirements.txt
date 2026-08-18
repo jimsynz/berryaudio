@@ -18,6 +18,7 @@ pillow==12.3.0
 luma==2.3.20
 luma.core==2.5.3
 luma.oled==3.15.0
+luma.lcd==2.13.0
 numpy==2.4.6
 rpi-lgpio==0.6
 aiohttp_cors==0.8.1
