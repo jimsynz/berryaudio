@@ -39,7 +39,7 @@ SPI_PORT = 0
 SPI_DEVICE = 0
 SPI_DC_PIN = 22
 SPI_RST_PIN = 27
-SPI_SPEED_HZ = 48000000
+SPI_SPEED_HZ = 16000000
 
 TOUCH_DEVICE = 1
 TOUCH_SPEED_HZ = 1000000
@@ -114,7 +114,7 @@ class DisplayILI9341:
         self._blink_visible = False
         self._current_track = None
         self._current_elapsed = 0
-        self._current_time = None
+        self._current_time = format_time(None)
         self._current_dir = None
         self._source_dir = None
         self._widget_visualizer = None
@@ -393,12 +393,15 @@ class DisplayILI9341:
 
                 self._dirty = False
                 self._hints_drawn = showing_hints
-                self._refresh_accent()
 
-                with canvas(self._device) as draw:
-                    self._draw_page(draw)
-                    if showing_hints:
-                        self._draw_hints(draw)
+                try:
+                    self._refresh_accent()
+                    with canvas(self._device) as draw:
+                        self._draw_page(draw)
+                        if showing_hints:
+                            self._draw_hints(draw)
+                except Exception:
+                    logger.exception(f"Error rendering page '{self._page}'")
 
     def _refresh_accent(self):
         if self._cover_art.accent == self._accent:
